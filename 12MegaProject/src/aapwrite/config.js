@@ -1,23 +1,27 @@
-import {confi} from '../confi/config'
+import conf from '../conf/conf.js'
 import {Client,Databases,ID,Storage,Query} from 'appwrite'
 
 export class Service{
     client=new Client();
     databases;
-    bukets;
+    bucket;
 
     constructor(){
         this.client
-        .setEndpoint(confi.appWriteUrl)
-        .setProject(confi.appWriteProjectId);
+        .setEndpoint(conf.appwriteUrl)
+        .setProject(conf.appwriteProjectId);
 
-        this.databases=new Databases()
-        this.bukets=new Storage()
+        this.databases=new Databases(this.client)
+        this.bucket=new Storage(this.client)
+
     }
+
+
+
 
     async createPost({title,slug,content,featuredImage,status,userID}){
         try {
-            return await this.databases.createDocument(confi.appWriteDatabaseId,confi.appWriteCollectionId,slug,{
+            return await this.databases.createDocument(conf.appwriteDatabaseId,conf.appwriteCollectionId,slug,{
                 title,
                 content,
                 featuredImage,
@@ -29,14 +33,13 @@ export class Service{
         }
     }
 
-    async updatePost(slug,{title,content,featuredImage,status,userID}){
+    async updatePost(slug,{title,content,featuredImage,status}){
         try {
-            return await this.databases.updateDocument(confi.appWriteDatabaseId,confi.appWriteCollectionId,slug,{
+            return await this.databases.updateDocument(conf.appwriteDatabaseId,conf.appwriteCollectionId,slug,{
                 title,
                 content,
                 featuredImage,
                 status,
-                userID
             })
         } catch (error) {
             console.log(("Appwrite serive :: updatePost :: error",error));
@@ -46,7 +49,7 @@ export class Service{
 
     async deletePost(slug){
         try {
-            await this.databases.deleteDocument(confi.appWriteDatabaseId,confi.appWriteCollectionId,slug)
+            await this.databases.deleteDocument(conf.appwriteDatabaseId,conf.appwriteCollectionId,slug)
             return true;
         } catch (error) {
             console.log(("Appwrite serive :: deletePost :: error",error));
@@ -56,7 +59,7 @@ export class Service{
 
     async getPost(slug){
         try {
-            await this.databases.getDocument(confi.appWriteDatabaseId,confi.appWriteCollectionId,slug)
+           return await this.databases.getDocument(conf.appwriteDatabaseId,conf.appwriteCollectionId,slug)
             return true;
         } catch (error) {
             console.log(("Appwrite serive :: deletePost :: error",error));
@@ -67,17 +70,18 @@ export class Service{
 
     async getPosts(queries=[Query.equal("status","active")]){
     try {
-        await this.databases.listDocuments(confi.appWriteDatabaseId,confi.appWriteCollectionId,queries) 
+       return await this.databases.listDocuments(conf.appwriteDatabaseId,conf.appwriteCollectionId,queries) 
     } catch (error) {
         console.log(("Appwrite serive :: getPosts :: error",error));
         return false;
     }
     }
 
-    async uploadFiles(File){
+    
+    async uploadFile(file){
         try {
-            await this.bukets.createFile(confi.appWriteBuketId,ID.unique(),File)
-            return true
+           return await this.bucket.createFile(conf.appwriteBucketId,ID.unique(),file)
+            
         } catch (error) {
             console.log(("Appwrite serive :: uploadFiles :: error",error));
             return false
@@ -86,7 +90,7 @@ export class Service{
     
     async deleteFile(fileId){
         try {
-            await this.bukets.deleteFile(confi.appWriteBuketId,fileId)
+            await this.bucket.deleteFile(conf.appwriteBucketId,fileId)
             return true
         } catch (error) {
             console.log(("Appwrite serive :: deleteFiles :: error",error));
@@ -94,8 +98,21 @@ export class Service{
         }
     
     }
+
+    getFilePreview(fileId){
+        try {
+           return this.bucket.getFilePreview(conf.appwriteBucketId,fileId)
+        } catch (error) {
+            console.log(("Appwrite serive :: getFilePreview :: error",error));
+            return false
+        }
+    }
+
+  
+
 }
 
 const service=new Service();
 
 export default service;
+
